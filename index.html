@@ -98,6 +98,22 @@
     border: none;
   }
   .btn:active { opacity: 0.75; }
+  .btn.ghost {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--border);
+    cursor: pointer;
+  }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 36px;
+    transform: translateX(-50%);
+    background: var(--ink-1); color: var(--page);
+    font-size: 14px; padding: 10px 18px; border-radius: 20px;
+    z-index: 50; opacity: 0; transition: opacity 0.25s;
+    pointer-events: none; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
 
   details { flex: 1; }
   details summary {
@@ -174,10 +190,11 @@
       <div class="perms"><b>權限需求：</b>無，不需要任何系統權限</div>
       <div class="btns">
         <a class="btn" href="/subman/">開啟 ↗</a>
+        <button class="btn ghost copy" data-url="https://tinyapp-tw.github.io/subman/">複製網址</button>
         <details>
           <summary>安裝教學</summary>
           <ol class="steps">
-            <li>用 <b>Safari</b> 按左邊的「開啟」</li>
+            <li>點「<b>複製網址</b>」，打開 <b>Safari</b> 貼到網址列前往（若本頁已是用 Safari 開啟，直接按「開啟」即可）</li>
             <li>點下方「<b>分享</b>」按鈕（方框加向上箭頭）</li>
             <li>選「<b>加入主畫面</b>」</li>
             <li>右上角按「<b>加入</b>」完成</li>
@@ -199,10 +216,11 @@
         📍 定位（記車位與距離）　📷 相機（拍柱號照片）　🧭 動作與方向（羅盤箭頭）</div>
       <div class="btns">
         <a class="btn" href="/parking/">開啟 ↗</a>
+        <button class="btn ghost copy" data-url="https://tinyapp-tw.github.io/parking/">複製網址</button>
         <details>
           <summary>安裝教學</summary>
           <ol class="steps">
-            <li>用 <b>Safari</b> 按左邊的「開啟」</li>
+            <li>點「<b>複製網址</b>」，打開 <b>Safari</b> 貼到網址列前往（若本頁已是用 Safari 開啟，直接按「開啟」即可）</li>
             <li>點下方「<b>分享</b>」按鈕（方框加向上箭頭）</li>
             <li>選「<b>加入主畫面</b>」</li>
             <li>右上角按「<b>加入</b>」完成</li>
@@ -224,5 +242,48 @@
     所有工具的資料只存在您的裝置上，不會上傳網路。
   </footer>
 </div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+let toastTimer = null;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+document.querySelectorAll('.copy').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const url = btn.dataset.url;
+    const done = () => toast('已複製網址，請貼到 Safari 開啟');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(done, () => fallbackCopy(url, done));
+    } else {
+      fallbackCopy(url, done);
+    }
+  });
+});
+
+/* 舊版瀏覽器與 App 內建瀏覽器的備援複製法 */
+function fallbackCopy(text, done) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'absolute';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    done();
+  } catch (e) {
+    prompt('請長按選取後複製：', text);
+  }
+  document.body.removeChild(ta);
+}
+</script>
 </body>
 </html>
