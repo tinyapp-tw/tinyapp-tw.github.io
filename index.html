@@ -72,6 +72,16 @@
   }
   .tool .name { font-size: 18px; font-weight: 700; }
   .tool .desc { font-size: 13px; color: var(--ink-2); margin-top: 2px; }
+  .perms {
+    margin-top: 12px;
+    padding: 9px 12px;
+    background: var(--page);
+    border-radius: 10px;
+    font-size: 12px;
+    color: var(--ink-muted);
+    line-height: 1.7;
+  }
+  .perms b { color: var(--ink-2); font-weight: 600; }
 
   .btns { display: flex; gap: 10px; margin-top: 14px; }
   .btn {
@@ -161,6 +171,7 @@
           <div class="desc">訂閱清單 · 費用統計 · 扣款提醒 · 多幣別</div>
         </div>
       </div>
+      <div class="perms"><b>權限需求：</b>無，不需要任何系統權限</div>
       <div class="btns">
         <a class="btn" href="/subman/">開啟 ↗</a>
         <details>
@@ -184,6 +195,8 @@
           <div class="desc">GPS 記車位 · 方向箭頭 · 停車計時 · 離線可用</div>
         </div>
       </div>
+      <div class="perms"><b>權限需求：</b>首次使用對應功能時 iPhone 會詢問，請選「允許」<br>
+        📍 定位（記車位與距離）　📷 相機（拍柱號照片）　🧭 動作與方向（羅盤箭頭）</div>
       <div class="btns">
         <a class="btn" href="/parking/">開啟 ↗</a>
         <details>
