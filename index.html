@@ -185,6 +185,24 @@
   nav.launcher-tabbar button .ico { font-size: 22px; line-height: 1; }
   nav.launcher-tabbar button.active { color: var(--accent); font-weight: 600; }
 
+  .order-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 2px;
+    border-top: 1px solid var(--hairline);
+    font-size: 14px;
+  }
+  .order-row:first-child { border-top: none; }
+  .order-row .oico { font-size: 20px; width: 26px; text-align: center; }
+  .order-row .oname { flex: 1; }
+  .order-row .obtns { display: flex; gap: 6px; }
+  .order-row .obtns button {
+    width: 40px; height: 36px;
+    border: 1px solid var(--border); border-radius: 8px;
+    background: transparent; color: var(--accent);
+    font-size: 15px; cursor: pointer; font-family: inherit;
+  }
+  .order-row .obtns button:disabled { color: var(--ink-muted); opacity: 0.4; }
+
   .toast {
     position: fixed; left: 50%; bottom: 36px;
     transform: translateX(-50%);
@@ -377,6 +395,11 @@
     <div class="launcher-settings" id="launcherSettings">
       <h1>🧰 工具箱設定</h1>
       <div class="lcard">
+        <h2>分頁列順序（由左到右）</h2>
+        <div id="toolOrderList"></div>
+        <p class="lnote">用 ↑ ↓ 調整工具在底部分頁列的順序，立即生效。「設定」固定在最右。</p>
+      </div>
+      <div class="lcard">
         <h2>資料備份（四個工具一次搞定）</h2>
         <button class="lbtn" id="btnFullExport">📦 一鍵匯出全部工具的備份</button>
         <button class="lbtn" id="btnFullImport">📥 匯入備份（整包或單一工具皆可）</button>
@@ -397,16 +420,10 @@
         <h2>小知識</h2>
         <p class="lnote">停車定位的 GPS、水電帳單的 Gmail 授權，在工具箱內都照常運作。用瀏覽器開 <b>tinyapp-tw.github.io/?app=1</b> 也能進入工具箱模式（例如在電腦上用）。誤刪工具箱圖示會失去容器內全部資料，請善用上方的一鍵全備份。</p>
       </div>
-      <p class="lnote" style="text-align:center; margin-top:4px">工具箱 版本 v2.00</p>
+      <p class="lnote" style="text-align:center; margin-top:4px">工具箱 版本 v2.01</p>
     </div>
   </div>
-  <nav class="launcher-tabbar">
-    <button data-tool="subman"><span class="ico">📊</span>訂閱</button>
-    <button data-tool="parking"><span class="ico">🅿️</span>停車</button>
-    <button data-tool="bills"><span class="ico">🧾</span>帳單</button>
-    <button data-tool="retire"><span class="ico">🧮</span>退休</button>
-    <button data-tool="__settings"><span class="ico">⚙️</span>設定</button>
-  </nav>
+  <nav class="launcher-tabbar" id="launcherTabbar"></nav>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -436,6 +453,13 @@ document.querySelectorAll('.copy').forEach((btn) => {
 
 /* ================= 啟動器模式 ================= */
 const TOOLS = { subman: '/subman/', parking: '/parking/', bills: '/bills/', retire: '/retire/' };
+const TOOL_META = {
+  subman:  { icon: '📊', name: '訂閱' },
+  parking: { icon: '🅿️', name: '停車' },
+  bills:   { icon: '🧾', name: '帳單' },
+  retire:  { icon: '🧮', name: '退休' }
+};
+const DEFAULT_ORDER = ['subman', 'parking', 'bills', 'retire'];
 const KNOWN_KEYS = { subman: 'subman.data.v1', parking: 'parking.data.v1', bills: 'bills.data.v1', retire: 'retire.data.v1' };
 const isStandaloneMode = navigator.standalone === true ||
   (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
@@ -445,6 +469,15 @@ if (launcherMode) {
   document.body.classList.add('launcher-mode');
   const frameArea = document.getElementById('frameArea');
   const frames = {};
+
+  function loadOrder() {
+    let order = [];
+    try { order = JSON.parse(localStorage.getItem('hub.toolOrder')) || []; } catch (e) {}
+    order = order.filter(id => id in TOOLS);
+    DEFAULT_ORDER.forEach(id => { if (!order.includes(id)) order.push(id); });  /* 補齊新工具 */
+    return order;
+  }
+  function saveOrder(order) { try { localStorage.setItem('hub.toolOrder', JSON.stringify(order)); } catch (e) {} }
 
   function switchTool(id) {
     document.querySelectorAll('.launcher-tabbar button').forEach(b =>
@@ -464,8 +497,47 @@ if (launcherMode) {
     }
     try { localStorage.setItem('hub.lastTool', id); } catch (e) {}
   }
-  document.querySelectorAll('.launcher-tabbar button').forEach(b =>
-    b.addEventListener('click', () => switchTool(b.dataset.tool)));
+
+  function renderTabbar() {
+    const nav = document.getElementById('launcherTabbar');
+    const order = loadOrder();
+    const items = order.map(id =>
+      '<button data-tool="' + id + '"><span class="ico">' + TOOL_META[id].icon + '</span>' + TOOL_META[id].name + '</button>'
+    ).join('') + '<button data-tool="__settings"><span class="ico">⚙️</span>設定</button>';
+    nav.innerHTML = items;
+    nav.querySelectorAll('button').forEach(b =>
+      b.addEventListener('click', () => switchTool(b.dataset.tool)));
+    const cur = document.querySelector('.launcher-tabbar button.active')?.dataset.tool;
+    if (cur) nav.querySelector('[data-tool="' + cur + '"]')?.classList.add('active');
+  }
+
+  function renderOrderList() {
+    const box = document.getElementById('toolOrderList');
+    const order = loadOrder();
+    box.innerHTML = order.map((id, i) =>
+      '<div class="order-row"><span class="oico">' + TOOL_META[id].icon + '</span>' +
+      '<span class="oname">' + TOOL_META[id].name + '</span>' +
+      '<span class="obtns">' +
+        '<button data-mv="up" data-i="' + i + '"' + (i === 0 ? ' disabled' : '') + ' aria-label="上移">↑</button>' +
+        '<button data-mv="down" data-i="' + i + '"' + (i === order.length - 1 ? ' disabled' : '') + ' aria-label="下移">↓</button>' +
+      '</span></div>'
+    ).join('');
+    box.querySelectorAll('button[data-mv]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const ord = loadOrder();
+        const i = Number(btn.dataset.i);
+        const j = btn.dataset.mv === 'up' ? i - 1 : i + 1;
+        if (j < 0 || j >= ord.length) return;
+        [ord[i], ord[j]] = [ord[j], ord[i]];
+        saveOrder(ord);
+        renderOrderList();
+        renderTabbar();
+      });
+    });
+  }
+
+  renderTabbar();
+  renderOrderList();
 
   let last = 'subman';
   try { last = localStorage.getItem('hub.lastTool') || 'subman'; } catch (e) {}

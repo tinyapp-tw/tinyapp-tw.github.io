@@ -1,5 +1,5 @@
 /* 工具箱 Service Worker — 只快取首頁外殼；各工具由自己的 SW 負責 */
-const CACHE = 'hub-v2.00';
+const CACHE = 'hub-v2.01';
 const PRECACHE = [
   './',
   './index.html',
