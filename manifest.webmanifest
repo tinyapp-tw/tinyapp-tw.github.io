@@ -1,0 +1,15 @@
+{
+  "name": "工具箱",
+  "short_name": "工具箱",
+  "description": "TinyApp 工具箱：訂閱管家、停車定位、水電帳單、退休試算，一個入口全搞定",
+  "lang": "zh-Hant",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f9f9f7",
+  "theme_color": "#f9f9f7",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

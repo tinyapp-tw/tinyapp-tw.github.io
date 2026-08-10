@@ -5,9 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <title>TinyApp 工具箱</title>
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="工具箱">
 <meta name="theme-color" content="#f9f9f7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0d0d0d" media="(prefers-color-scheme: dark)">
@@ -108,6 +112,78 @@
     border: 1px solid var(--border);
     cursor: pointer;
   }
+
+  /* ---------- 啟動器模式 ---------- */
+  #launcher { display: none; }
+  body.launcher-mode .wrap { display: none; }
+  body.launcher-mode #launcher { display: block; }
+
+  .frame-area {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    bottom: calc(58px + env(safe-area-inset-bottom));
+    background: var(--page);
+  }
+  .frame-area iframe {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    border: none;
+    display: none;
+    background: var(--page);
+  }
+  .frame-area iframe.active { display: block; }
+
+  .launcher-settings {
+    position: absolute; inset: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: calc(env(safe-area-inset-top) + 24px) 18px 24px;
+    display: none;
+  }
+  .launcher-settings.active { display: block; }
+  .launcher-settings h1 { font-size: 22px; text-align: center; margin-bottom: 16px; }
+  .lcard {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 12px;
+    max-width: 520px;
+    margin-left: auto; margin-right: auto;
+  }
+  .lcard h2 { font-size: 13px; font-weight: 600; color: var(--ink-2, #52514e); margin-bottom: 10px; }
+  .lcard .lbtn {
+    display: flex; align-items: center; justify-content: center;
+    width: 100%;
+    border-radius: 11px;
+    font-size: 14px; font-weight: 600;
+    padding: 12px 14px; min-height: 44px;
+    cursor: pointer; font-family: inherit;
+    background: transparent; color: var(--accent);
+    border: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+  .lcard .lbtn:active { opacity: 0.75; }
+  .lcard .lnote { font-size: 12px; color: var(--ink-muted); line-height: 1.7; }
+  .lcard ol { padding-left: 20px; font-size: 13px; color: var(--ink-2, #52514e); line-height: 2.0; }
+
+  nav.launcher-tabbar {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--hairline);
+    display: flex; justify-content: space-around;
+    padding: 6px 0 calc(env(safe-area-inset-bottom) + 6px);
+    z-index: 40;
+  }
+  nav.launcher-tabbar button {
+    background: none; border: none;
+    font-family: inherit; font-size: 11px;
+    color: var(--ink-muted); cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    width: 68px; padding: 4px 0;
+  }
+  nav.launcher-tabbar button .ico { font-size: 22px; line-height: 1; }
+  nav.launcher-tabbar button.active { color: var(--accent); font-weight: 600; }
 
   .toast {
     position: fixed; left: 50%; bottom: 36px;
@@ -288,9 +364,49 @@
   </div>
 
   <footer>
-    各工具請個別「加入主畫面」使用，此首頁僅作為目錄與安裝入口。<br>
+    兩種用法擇一：各工具「個別加入主畫面」使用；<br>
+    或把<b>本頁</b>加入主畫面，即成「工具箱 App」——分頁切換四個工具＋一鍵全備份。<br>
+    同一個工具請選定一種用法，兩邊資料互不相通。<br>
     所有工具的資料只存在您的裝置上，不會上傳網路。
   </footer>
+</div>
+
+<!-- ============ 啟動器模式（主畫面 App 或 ?app=1 時顯示） ============ -->
+<div id="launcher">
+  <div class="frame-area" id="frameArea">
+    <div class="launcher-settings" id="launcherSettings">
+      <h1>🧰 工具箱設定</h1>
+      <div class="lcard">
+        <h2>資料備份（四個工具一次搞定）</h2>
+        <button class="lbtn" id="btnFullExport">📦 一鍵匯出全部工具的備份</button>
+        <button class="lbtn" id="btnFullImport">📥 匯入備份（整包或單一工具皆可）</button>
+        <input type="file" id="fullImportFile" accept="application/json,.json" style="display:none">
+        <p class="lnote">全備份包含工具箱容器內四個工具的所有資料。匯入時自動辨識檔案類型：工具箱全備份、或任一工具單獨匯出的備份檔。</p>
+      </div>
+      <div class="lcard">
+        <h2>從獨立 App 搬家到工具箱</h2>
+        <ol>
+          <li>打開主畫面上<b>獨立的</b>工具 App → 設定 → 匯出備份檔</li>
+          <li>回到這裡 → 上方「匯入備份」→ 選那個檔案</li>
+          <li>每個要搬的工具重複一次</li>
+          <li>確認資料都在後，刪除獨立 App 的圖示</li>
+        </ol>
+        <p class="lnote">重要原則：同一個工具選定一個家（工具箱或獨立 App），不要兩邊同時記資料——iOS 的容器互相隔離，兩邊不會同步。</p>
+      </div>
+      <div class="lcard">
+        <h2>小知識</h2>
+        <p class="lnote">停車定位的 GPS、水電帳單的 Gmail 授權，在工具箱內都照常運作。用瀏覽器開 <b>tinyapp-tw.github.io/?app=1</b> 也能進入工具箱模式（例如在電腦上用）。誤刪工具箱圖示會失去容器內全部資料，請善用上方的一鍵全備份。</p>
+      </div>
+      <p class="lnote" style="text-align:center; margin-top:4px">工具箱 版本 v2.00</p>
+    </div>
+  </div>
+  <nav class="launcher-tabbar">
+    <button data-tool="subman"><span class="ico">📊</span>訂閱</button>
+    <button data-tool="parking"><span class="ico">🅿️</span>停車</button>
+    <button data-tool="bills"><span class="ico">🧾</span>帳單</button>
+    <button data-tool="retire"><span class="ico">🧮</span>退休</button>
+    <button data-tool="__settings"><span class="ico">⚙️</span>設定</button>
+  </nav>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -317,6 +433,114 @@ document.querySelectorAll('.copy').forEach((btn) => {
     }
   });
 });
+
+/* ================= 啟動器模式 ================= */
+const TOOLS = { subman: '/subman/', parking: '/parking/', bills: '/bills/', retire: '/retire/' };
+const KNOWN_KEYS = { subman: 'subman.data.v1', parking: 'parking.data.v1', bills: 'bills.data.v1', retire: 'retire.data.v1' };
+const isStandaloneMode = navigator.standalone === true ||
+  (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+const launcherMode = isStandaloneMode || new URLSearchParams(location.search).has('app');
+
+if (launcherMode) {
+  document.body.classList.add('launcher-mode');
+  const frameArea = document.getElementById('frameArea');
+  const frames = {};
+
+  function switchTool(id) {
+    document.querySelectorAll('.launcher-tabbar button').forEach(b =>
+      b.classList.toggle('active', b.dataset.tool === id));
+    document.getElementById('launcherSettings').classList.toggle('active', id === '__settings');
+    Object.values(frames).forEach(f => f.classList.remove('active'));
+    if (id !== '__settings') {
+      if (!frames[id]) {
+        const f = document.createElement('iframe');
+        f.src = TOOLS[id];
+        f.setAttribute('allow', 'geolocation');
+        f.title = id;
+        frameArea.appendChild(f);
+        frames[id] = f;
+      }
+      frames[id].classList.add('active');
+    }
+    try { localStorage.setItem('hub.lastTool', id); } catch (e) {}
+  }
+  document.querySelectorAll('.launcher-tabbar button').forEach(b =>
+    b.addEventListener('click', () => switchTool(b.dataset.tool)));
+
+  let last = 'subman';
+  try { last = localStorage.getItem('hub.lastTool') || 'subman'; } catch (e) {}
+  if (!(last in TOOLS) && last !== '__settings') last = 'subman';
+  switchTool(last);
+
+  /* 一鍵全備份：四個工具的資料鍵都住在這個容器裡 */
+  document.getElementById('btnFullExport').addEventListener('click', () => {
+    const out = { type: 'tinyapp-full-backup', exportedAt: new Date().toISOString(), data: {} };
+    let n = 0;
+    Object.values(KNOWN_KEYS).forEach(k => {
+      const v = localStorage.getItem(k);
+      if (v != null) { out.data[k] = v; n++; }
+    });
+    if (!n) { toast('目前沒有任何工具資料可備份'); return; }
+    const blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    const d = new Date();
+    a.download = '工具箱全備份-' + d.getFullYear() +
+      String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') + '.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast('已匯出 ' + n + ' 個工具的資料');
+  });
+
+  function detectToolKey(d) {
+    if (!d || typeof d !== 'object') return null;
+    if (Array.isArray(d.subs)) return KNOWN_KEYS.subman;
+    if (Array.isArray(d.bills)) return KNOWN_KEYS.bills;
+    if (Array.isArray(d.snaps)) return KNOWN_KEYS.retire;
+    if ('current' in d && 'rate' in d) return KNOWN_KEYS.parking;
+    return null;
+  }
+
+  document.getElementById('btnFullImport').addEventListener('click', () =>
+    document.getElementById('fullImportFile').click());
+  document.getElementById('fullImportFile').addEventListener('change', (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const d = JSON.parse(reader.result);
+        let n = 0;
+        if (d && d.type === 'tinyapp-full-backup' && d.data) {
+          if (!confirm('將覆蓋工具箱內對應工具的資料，確定匯入全備份？')) { e.target.value = ''; return; }
+          Object.values(KNOWN_KEYS).forEach(k => {
+            if (d.data[k] != null) { localStorage.setItem(k, d.data[k]); n++; }
+          });
+        } else {
+          const key = detectToolKey(d);
+          if (!key) throw new Error('unknown format');
+          if (!confirm('偵測為單一工具的備份，將覆蓋該工具在工具箱內的資料，確定？')) { e.target.value = ''; return; }
+          localStorage.setItem(key, JSON.stringify(d));
+          n = 1;
+        }
+        Object.values(frames).forEach(fr => { fr.src = fr.getAttribute('src'); });  /* 重載吃新資料 */
+        toast('已匯入 ' + n + ' 個工具的資料');
+      } catch (err) {
+        alert('檔案格式不正確：不是工具箱全備份，也不是任一工具的備份檔。');
+      }
+      e.target.value = '';
+    };
+    reader.readAsText(f);
+  });
+
+  if ('serviceWorker' in navigator &&
+      (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
+  if (navigator.storage && navigator.storage.persist) {
+    navigator.storage.persist().catch(() => {});
+  }
+}
 
 /* 舊版瀏覽器與 App 內建瀏覽器的備援複製法 */
 function fallbackCopy(text, done) {

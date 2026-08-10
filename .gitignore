@@ -1,3 +1,9 @@
 ﻿# 本機開發設定，不需要上傳
 .claude/
 __pycache__/
+
+# 本機測試用 junction，不上傳
+subman/
+parking/
+bills/
+retire/
