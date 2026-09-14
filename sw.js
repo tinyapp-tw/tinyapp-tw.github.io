@@ -1,5 +1,5 @@
 /* 工具箱 Service Worker — 只快取首頁外殼；各工具由自己的 SW 負責 */
-const CACHE = 'hub-v2.01';
+const CACHE = 'hub-v2.02';
 const PRECACHE = [
   './',
   './index.html',
@@ -39,8 +39,11 @@ self.addEventListener('fetch', (e) => {
           if (res.ok) {
             const copy = res.clone();
             e.waitUntil(caches.open(CACHE).then((c) => c.put('./index.html', copy)));
+            return res;
           }
-          return res;
+          /* 404 / 5xx 對 fetch 來說也算「成功」，不會走到下面的 catch。
+             站台被刪、Pages 被關或 GitHub 出錯時，寧可給快取裡還能用的版本，也不要丟一張錯誤頁給使用者 */
+          return caches.match('./index.html').then((hit) => hit || res);
         })
         .catch(() => caches.match('./index.html'))
     );
